@@ -12,11 +12,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1041/1041883.png">
 
-  <!-- Tailwind CSS & Supabase Client v2 -->
+  <!-- Tailwind CSS CDN & Supabase Client v2 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Google Fonts: Inter & Merriweather (Phong cách báo chí chuyên nghiệp) -->
+  <!-- Google Fonts: Inter & Merriweather (Chuẩn phong cách báo chí hiện đại) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -48,11 +48,11 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    /* Typography thân thiện chuẩn tòa soạn điện tử hiện đại */
+    /* Typography báo chí cho trang đọc chi tiết */
     .article-full-body h2 {
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       font-weight: 800;
-      margin-top: 1.8rem;
+      margin-top: 1.75rem;
       margin-bottom: 0.65rem;
       color: #0f172a;
       line-height: 1.4;
@@ -64,22 +64,22 @@
       content: "";
       display: inline-block;
       width: 4px;
-      height: 1.3rem;
+      height: 1.25rem;
       background-color: #dc2626;
       border-radius: 2px;
     }
     .article-full-body h3 {
-      font-size: 1.12rem;
+      font-size: 1.1rem;
       font-weight: 700;
-      margin-top: 1.4rem;
+      margin-top: 1.35rem;
       margin-bottom: 0.5rem;
       color: #1e293b;
     }
     .article-full-body p {
-      margin-bottom: 1.25rem;
-      line-height: 1.9;
+      margin-bottom: 1.2rem;
+      line-height: 1.85;
       color: #334155;
-      font-size: 1.025rem;
+      font-size: 1rem;
       text-align: justify;
       font-family: 'Merriweather', serif;
     }
@@ -98,7 +98,7 @@
       font-size: 0.825rem;
       color: #64748b;
       font-family: 'Inter', sans-serif;
-      margin-top: 0.6rem;
+      margin-top: 0.55rem;
       font-style: italic;
     }
   </style>
@@ -106,21 +106,21 @@
 <body class="bg-[#f8fafc] text-slate-800 min-h-screen flex flex-col font-sans antialiased selection:bg-red-100 selection:text-brand-darkRed">
 
   <!-- ================= TOPBAR TIỆN ÍCH ================= -->
-  <div class="bg-slate-900 text-slate-300 text-[11px] font-mono py-1 px-4 border-b border-slate-800">
+  <div class="bg-slate-900 text-slate-300 text-[11px] font-mono py-1.5 px-4 border-b border-slate-800">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
         <span class="inline-flex items-center gap-1.5 text-emerald-400 font-semibold">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-          DỮ LIỆU ĐỐI SOÁT TRỰC TUYẾN
+          ĐỒNG BỘ TIN TỨC TRỰC TUYẾN
         </span>
         <span class="text-slate-600 hidden sm:inline">|</span>
-        <span class="text-slate-400 hidden sm:inline">Nguồn: CAND &bull; Dân Trí &bull; VnExpress &bull; VietnamNet</span>
+        <span class="text-slate-400 hidden sm:inline">Báo CAND &bull; Dân Trí &bull; VnExpress &bull; Tuổi Trẻ &bull; VietnamNet</span>
       </div>
       <div id="live-clock" class="text-slate-400">Đang đồng bộ giờ...</div>
     </div>
   </div>
 
-  <!-- ================= HEADER CHÍNH (SÁNG SỦA, TINH TẾ) ================= -->
+  <!-- ================= HEADER CHÍNH ================= -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs backdrop-blur-md bg-white/95">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
       
@@ -137,12 +137,12 @@
         </div>
       </div>
 
-      <!-- Ô tìm kiếm thông minh -->
+      <!-- Ô tìm kiếm -->
       <div class="flex-grow max-w-xl relative text-slate-800 hidden sm:block">
         <input 
           type="text" 
           id="search-input"
-          placeholder="Tìm theo vụ việc, địa phương (Hà Nội, TP.HCM...), thủ đoạn..." 
+          placeholder="Tìm theo từ khóa (lừa đảo, xét xử, nồng độ cồn, Hà Nội, TP.HCM...)" 
           class="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white rounded-2xl pl-10 pr-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-red/20 border border-slate-200 transition placeholder:text-slate-400"
           oninput="handleSearch()"
         />
@@ -160,13 +160,14 @@
       </div>
     </div>
 
-    <!-- Thanh Menu Chuyên Mục Tươi Sáng -->
+    <!-- Thanh Menu Chuyên Mục -->
     <nav class="border-t border-slate-100 bg-white">
       <div class="max-w-7xl mx-auto px-4 flex items-center gap-2 overflow-x-auto no-scrollbar py-2 text-xs font-semibold" id="category-nav">
         <button onclick="filterCategory('ALL')" class="cat-pill active px-3.5 py-1.5 rounded-full bg-brand-lightRed text-brand-darkRed border border-red-200 shrink-0 transition" data-cat="ALL">Tất cả tin</button>
         <button onclick="filterCategory('trong_an')" class="cat-pill px-3.5 py-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 shrink-0 transition border border-transparent" data-cat="trong_an">🔥 Trọng án</button>
         <button onclick="filterCategory('lua_dao')" class="cat-pill px-3.5 py-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 shrink-0 transition border border-transparent" data-cat="lua_dao">⚠️ Cảnh báo lừa đảo</button>
         <button onclick="filterCategory('phap_dinh')" class="cat-pill px-3.5 py-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 shrink-0 transition border border-transparent" data-cat="phap_dinh">⚖ Pháp đình & Xét xử</button>
+        <button onclick="filterCategory('giao_thong')" class="cat-pill px-3.5 py-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 shrink-0 transition border border-transparent" data-cat="giao_thong">🚗 Giao thông & Đô thị</button>
         <button onclick="filterCategory('an_ninh_dia_phuong')" class="cat-pill px-3.5 py-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 shrink-0 transition border border-transparent" data-cat="an_ninh_dia_phuong">🛡 An ninh trật tự</button>
       </div>
     </nav>
@@ -179,7 +180,7 @@
         <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> TIN NÓNG
       </span>
       <div id="breaking-ticker" class="truncate font-semibold text-slate-800 cursor-pointer hover:text-brand-red transition">
-        Đang đồng bộ dữ liệu sự kiện từ cơ quan điều tra...
+        Đang đồng bộ dữ liệu sự kiện từ các cơ quan chức năng...
       </div>
     </div>
   </section>
@@ -187,7 +188,7 @@
   <!-- ================= GIAO DIỆN 1: MÀN HÌNH CHÍNH (CATALOG) ================= -->
   <main id="catalog-view" class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full space-y-7">
 
-    <!-- KHỐI HERO TIÊU ĐIỂM BÁO CHÍ -->
+    <!-- KHỐI HERO TIÊU ĐIỂM -->
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch" id="hero-section">
       
       <!-- Tin chính lớn bên trái -->
@@ -205,7 +206,7 @@
         </div>
       </div>
 
-      <!-- Cột 2 tin tiêu điểm phụ bên phải -->
+      <!-- Cột 2 tin phụ bên phải -->
       <div class="lg:col-span-4 flex flex-col gap-4 justify-between" id="hero-side-container"></div>
     </section>
 
@@ -219,7 +220,7 @@
         <span id="news-count" class="px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-mono font-semibold">0 tin</span>
       </div>
 
-      <!-- Bộ lọc nhanh theo Tỉnh / Thành phố -->
+      <!-- Bộ lọc khu vực -->
       <div class="flex items-center gap-2 text-xs">
         <span class="text-slate-400 font-mono hidden sm:inline">Khu vực:</span>
         <select id="location-select" onchange="filterLocation(this.value)" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-brand-red shadow-2xs">
@@ -229,11 +230,13 @@
           <option value="Đà Nẵng">Đà Nẵng</option>
           <option value="Cần Thơ">Cần Thơ</option>
           <option value="Bình Dương">Bình Dương</option>
+          <option value="Đồng Nai">Đồng Nai</option>
+          <option value="Quảng Ninh">Quảng Ninh</option>
         </select>
       </div>
     </div>
 
-    <!-- LƯỚI TIN CHÍNH (CARD SÁNG SỦA, SẮC NÉT) -->
+    <!-- LƯỚI TIN CHÍNH -->
     <div id="news-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"></div>
 
     <!-- Khối Loading -->
@@ -244,7 +247,7 @@
 
   </main>
 
-  <!-- ================= GIAO DIỆN 2: TRANG ĐỌC BÀI BÁO (DETAIL VIEW TOÀN VĂN) ================= -->
+  <!-- ================= GIAO DIỆN 2: TRANG ĐỌC BÀI VIẾT (DETAIL VIEW) ================= -->
   <main id="article-detail-view" class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full hidden">
     
     <!-- Thanh điều hướng Breadcrumb -->
@@ -259,10 +262,10 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       
-      <!-- CỘT TRÁI (8/12): BÀI BÁO CHI TIẾT TOÀN VĂN -->
+      <!-- CỘT TRÁI (8/12): NỘI DUNG TOÀN VĂN -->
       <article class="lg:col-span-8 bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-9 shadow-xs space-y-5">
         
-        <!-- Header bài báo -->
+        <!-- Tiêu đề & meta -->
         <div class="space-y-3 border-b border-slate-100 pb-5">
           <div class="flex flex-wrap items-center gap-2">
             <span id="detail-category-badge" class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-brand-lightRed text-brand-darkRed border border-red-200 font-mono"></span>
@@ -272,14 +275,14 @@
           <h1 id="detail-article-title" class="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug"></h1>
         </div>
 
-        <!-- Khung tóm tắt (Sapo bài báo) -->
+        <!-- Khung tóm tắt (Sapo) -->
         <div class="p-4 rounded-2xl bg-slate-50 border-l-4 border-brand-red text-slate-700 text-sm leading-relaxed font-medium italic" id="detail-article-summary"></div>
 
         <!-- Ảnh hiện trường đại diện bài báo -->
         <div class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
           <img id="detail-article-img" src="" alt="Ảnh bài báo" class="w-full object-cover max-h-[460px]" onerror="handleImgError(this)">
           <div class="p-2 text-center text-[11px] text-slate-500 font-mono italic bg-slate-50 border-t border-slate-100">
-            Hình ảnh hiện trường và tài liệu cung cấp từ cơ quan chức năng
+            Hình ảnh hiện trường và tư liệu từ cơ quan chức năng
           </div>
         </div>
 
@@ -309,14 +312,14 @@
           <div id="related-news-container" class="space-y-3"></div>
         </div>
 
-        <!-- Box Khuyến Cáo An Ninh -->
+        <!-- Hộp cảnh giác an ninh -->
         <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-5 shadow-sm space-y-2.5">
           <div class="flex items-center gap-2 text-amber-400 font-mono font-bold text-xs uppercase">
             <span>🛡</span> KHUYẾN CÁO AN NINH 24H
           </div>
-          <h4 class="text-sm font-bold leading-snug">Cảnh giác tội phạm mạng & giả danh công quyền</h4>
+          <h4 class="text-sm font-bold leading-snug">Cảnh giác tội phạm mạo danh cơ quan tư pháp</h4>
           <p class="text-[11px] text-slate-300 leading-relaxed">
-            Tuyệt đối không chuyển tiền, không cài đặt ứng dụng APK lạ hoặc cung cấp mã OTP/sinh trắc học cho người tự xưng là cán bộ Công an, Viện kiểm sát hoặc Thuế qua điện thoại.
+            Công an, Tòa án và Viện kiểm sát tuyệt đối không làm việc qua điện thoại hoặc yêu cầu người dân chuyển tiền nộp phạt vào tài khoản cá nhân.
           </p>
         </div>
 
@@ -330,11 +333,11 @@
   <footer class="bg-white border-t border-slate-200 text-slate-500 text-center py-6 text-xs font-mono mt-auto">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
       <div>An Ninh 24H &bull; Nền Tảng Cập Nhật Thông Tin Pháp Luật & Trật Tự Xã Hội</div>
-      <div class="text-slate-400 text-[10px]">Tự động tổng hợp và ghi nguồn báo chí chính thống</div>
+      <div class="text-slate-400 text-[10px]">Tự động tổng hợp và ghi nhận nguồn báo chí chính thống</div>
     </div>
   </footer>
 
-  <!-- ================= KỊCH BẢN LOGIC KẾT NỐI SUPABASE & ĐIỀU HƯỚNG ================= -->
+  <!-- ================= KỊCH BẢN JAVASCRIPT ================= -->
   <script>
     const SUPABASE_URL = "https://lleeibzegmnycuingzgx.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsZWVpYnplZ21ueWN1aW5nemd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMjc5OTUsImV4cCI6MjEwNTcwMzk5NX0.KrO8Y8qoKh0NIPYDL6wki7zGb-Lxi1xwWgQrX9xSXxE";
@@ -348,22 +351,25 @@
       'trong_an': 'Trọng án',
       'lua_dao': 'Cảnh báo lừa đảo',
       'phap_dinh': 'Pháp đình & Xét xử',
+      'giao_thong': 'Giao thông & Đô thị',
       'an_ninh_dia_phuong': 'An ninh trật tự'
     };
 
-    // Ảnh dự phòng chất lượng cao nếu ảnh từ báo bị lỗi 403 hoặc chết link
-    const FALLBACK_IMGS = [
-      "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=800&q=80"
-    ];
-
-    function handleImgError(el) {
-      el.onerror = null;
-      el.src = FALLBACK_IMGS[Math.floor(Math.random() * FALLBACK_IMGS.length)];
+    // Hàm chuyển đổi ảnh qua proxy weserv để vượt chặn 403 hotlink
+    function getSafeImageUrl(url) {
+      if (!url || typeof url !== 'string') return '';
+      if (url.includes('images.weserv.nl')) return url;
+      const clean = url.replace(/^https?:\/\//i, '');
+      return `https://images.weserv.nl/?url=${encodeURIComponent(clean)}&w=800&fit=cover&output=webp`;
     }
 
-    // Cập nhật đồng hồ thời gian thực
+    // Xử lý khi ảnh bị lỗi (chỉ thay thế bằng placeholder trung tính, không bị trùng cố định)
+    function handleImgError(el) {
+      el.onerror = null;
+      el.src = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22800%22%20height%3D%22500%22%20viewBox%3D%220%200%20800%20500%22%3E%3Crect%20fill%3D%22%23f1f5f9%22%20width%3D%22800%22%20height%3D%22500%22%2F%3E%3Ctext%20fill%3D%22%2394a3b8%22%20font-family%3D%22sans-serif%22%20font-size%3D%2224%22%20dy%3D%2210.5%22%20font-weight%3D%22bold%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20text-anchor%3D%22middle%22%3EH%C3%ACnh%20%E1%BA%A3nh%20t%C6%B0%20li%E1%BB%87u%20v%E1%BB%A5%20%C3%A1n%3C%2Ftext%3E%3C%2Fsvg%3E";
+    }
+
+    // Đồng hồ thời gian thực
     function updateClock() {
       const now = new Date();
       const str = now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' }) + " | " + now.toLocaleTimeString('vi-VN');
@@ -385,7 +391,11 @@
         document.getElementById('loading-state').classList.add('hidden');
 
         if (!error && data && data.length > 0) {
-          allNews = data;
+          allNews = data.map(item => ({
+            ...item,
+            cover_image: getSafeImageUrl(item.cover_image)
+          }));
+
           renderHeroBlock(allNews);
           renderNews(allNews);
           setupBreakingNews(allNews);
@@ -478,7 +488,7 @@
       `).join('');
     }
 
-    // ================= XỬ LÝ CHUYỂN TRANG ĐỌC BÀI CHI TIẾT (DETAIL VIEW) =================
+    // ================= CHUYỂN TRANG XEM BÀI VIẾT (DETAIL VIEW) =================
     function openArticleDetail(id) {
       const item = allNews.find(n => n.id === id);
       if (!item) return;
@@ -487,7 +497,7 @@
       document.getElementById('article-detail-view').classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Nạp dữ liệu vào trang chi tiết
+      // Nạp dữ liệu vào chi tiết bài viết
       document.getElementById('detail-breadcrumb-cat').innerText = categoryNames[item.category] || item.category;
       document.getElementById('detail-category-badge').innerText = categoryNames[item.category] || item.category;
       document.getElementById('detail-location-badge').innerText = `Địa bàn: ${item.location}`;
@@ -499,7 +509,7 @@
       document.getElementById('detail-source-name').innerText = item.source_name;
       document.getElementById('detail-source-link').href = item.source_url || '#';
 
-      // Nạp tin liên quan cùng chuyên mục bên cột phải
+      // Nạp tin liên quan bên cột phải
       const related = allNews.filter(n => n.id !== item.id && (n.category === item.category || n.location === item.location)).slice(0, 4);
       document.getElementById('related-news-container').innerHTML = (related.length > 0 ? related : allNews.slice(0, 4)).map(rel => `
         <div onclick="openArticleDetail(${rel.id})" class="flex gap-3 items-start cursor-pointer group pb-3 border-b border-slate-100 last:border-b-0">
@@ -552,11 +562,11 @@
       renderNews(filtered);
     }
 
-    // Kích hoạt PWA Service Worker
+    // PWA Service Worker Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('PWA Service Worker đã bật:', reg.scope))
+          .then(reg => console.log('PWA Service Worker đã sẵn sàng:', reg.scope))
           .catch(err => console.error('PWA Lỗi:', err));
       });
     }
