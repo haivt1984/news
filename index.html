@@ -21,7 +21,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Google Fonts: Inter & Merriweather -->
+  <!-- Google Fonts: Inter & Merriweather (Chuẩn đọc báo dài không mỏi mắt) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -49,12 +49,88 @@
     }
   </script>
 
-  <!-- Nhúng file CSS di động -->
+  <!-- Nhúng CSS ngoài (nếu có) và CSS tối ưu bài viết dài trực tiếp -->
   <link rel="stylesheet" href="./style.css">
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Typography chuyên sâu cho bài báo dài nhiều đoạn văn */
+    .article-full-body {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    .article-full-body h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-top: 1.75rem;
+      margin-bottom: 0.65rem;
+      color: #0f172a;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .article-full-body h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 1.25rem;
+      background-color: #dc2626;
+      border-radius: 2px;
+    }
+    .article-full-body h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #1e293b;
+    }
+    .article-full-body p {
+      margin-bottom: 1.2rem;
+      line-height: 1.85;
+      color: #334155;
+      font-size: 1.025rem;
+      text-align: justify;
+      font-family: 'Merriweather', serif;
+    }
+    .article-full-body figure {
+      margin: 1.75rem 0;
+      text-align: center;
+    }
+    .article-full-body img {
+      max-width: 100% !important;
+      height: auto !important;
+      border-radius: 0.85rem;
+      object-fit: cover;
+      display: block;
+      margin: 0 auto;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+      border: 1px solid #f1f5f9;
+    }
+    .article-full-body figcaption {
+      font-size: 0.825rem;
+      color: #64748b;
+      font-family: 'Inter', sans-serif;
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+    .article-full-body blockquote {
+      border-left: 3px solid #dc2626;
+      padding-left: 1rem;
+      margin: 1.25rem 0;
+      font-style: italic;
+      color: #475569;
+      background-color: #f8fafc;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+    }
+  </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-800 min-h-screen flex flex-col font-sans antialiased selection:bg-red-100 selection:text-brand-darkRed">
 
-  <!-- Topbar tiện ích -->
+  <!-- ================= TOPBAR TIỆN ÍCH ================= -->
   <div class="bg-slate-900 text-slate-300 text-[11px] font-mono py-1.5 px-4 border-b border-slate-800">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -63,13 +139,13 @@
           ĐỒNG BỘ TRỰC TUYẾN
         </span>
         <span class="text-slate-600 hidden sm:inline">|</span>
-        <span class="text-slate-400 hidden sm:inline">Báo CAND &bull; An Ninh Thủ Đô &bull; PLO &bull; VnExpress</span>
+        <span class="text-slate-400 hidden sm:inline">Báo CAND &bull; An Ninh Thủ Đô &bull; PLO &bull; VnExpress &bull; Tuổi Trẻ</span>
       </div>
       <div id="live-clock" class="text-slate-400">Đang đồng bộ giờ...</div>
     </div>
   </div>
 
-  <!-- Header chính -->
+  <!-- ================= HEADER CHÍNH ================= -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs backdrop-blur-md bg-white/95">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-3">
       
@@ -122,7 +198,7 @@
     </nav>
   </header>
 
-  <!-- Ticker Tin Nóng -->
+  <!-- ================= TICKER TIN NÓNG ================= -->
   <section class="bg-gradient-to-r from-red-50 via-amber-50 to-white border-b border-red-100 text-xs py-2 px-4 shadow-2xs">
     <div class="max-w-7xl mx-auto flex items-center gap-2.5">
       <span class="font-extrabold bg-brand-red text-white px-2 py-0.5 rounded-md text-[10px] uppercase font-mono tracking-wider shrink-0 flex items-center gap-1 shadow-2xs">
@@ -134,7 +210,7 @@
     </div>
   </section>
 
-  <!-- MÀN HÌNH CHÍNH (CATALOG VIEW) -->
+  <!-- ================= MÀN HÌNH CHÍNH (CATALOG VIEW) ================= -->
   <main id="catalog-view" class="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-7 flex-grow w-full space-y-6 sm:space-y-7">
 
     <!-- Khối Hero -->
@@ -156,7 +232,7 @@
       <div class="lg:col-span-4 flex flex-col gap-3 sm:gap-4 justify-between" id="hero-side-container"></div>
     </section>
 
-    <!-- Tiêu đề & bộ lọc -->
+    <!-- Tiêu đề & bộ lọc khu vực -->
     <div class="flex items-center justify-between border-b border-slate-200 pb-3">
       <div class="flex items-center gap-2.5">
         <h2 id="section-title" class="font-extrabold text-xs sm:text-base text-slate-900 uppercase font-mono flex items-center gap-2">
@@ -191,7 +267,7 @@
 
   </main>
 
-  <!-- MÀN HÌNH ĐỌC TOÀN VĂN (DETAIL VIEW) -->
+  <!-- ================= MÀN HÌNH ĐỌC TOÀN VĂN (DETAIL VIEW) ================= -->
   <main id="article-detail-view" class="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-6 flex-grow w-full hidden">
     
     <div class="flex items-center justify-between mb-4 sm:mb-5">
@@ -204,7 +280,9 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
-      <article class="lg:col-span-8 bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 p-4 sm:p-9 shadow-xs space-y-4 sm:space-y-5">
+      
+      <!-- CỘT TRÁI (8/12): TOÀN VĂN BÀI BÁO -->
+      <article class="lg:col-span-8 bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 p-5 sm:p-9 shadow-xs space-y-4 sm:space-y-5">
         <div class="space-y-3 border-b border-slate-100 pb-4 sm:pb-5">
           <div class="flex flex-wrap items-center gap-2">
             <span id="detail-category-badge" class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-brand-lightRed text-brand-darkRed border border-red-200 font-mono"></span>
@@ -223,6 +301,7 @@
           </div>
         </div>
 
+        <!-- Khung chứa nội dung bài báo toàn văn chi tiết -->
         <div id="detail-article-content" class="article-full-body"></div>
 
         <div class="pt-4 sm:pt-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
@@ -235,6 +314,7 @@
         </div>
       </article>
 
+      <!-- CỘT PHẢI (4/12): TIN LIÊN QUAN & HỘP CẢNH GIÁC -->
       <aside class="lg:col-span-4 space-y-5 sticky top-20">
         <div class="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-xs space-y-3.5">
           <h3 class="font-bold text-xs uppercase tracking-wider font-mono text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2.5">
@@ -258,7 +338,7 @@
 
   </main>
 
-  <!-- Footer -->
+  <!-- ================= FOOTER ================= -->
   <footer class="bg-white border-t border-slate-200 text-slate-500 text-center py-6 text-xs font-mono mt-auto">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
       <div>An Ninh 24H &bull; Nền Tảng Cập Nhật Thông Tin Pháp Luật & Trật Tự Xã Hội</div>
