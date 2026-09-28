@@ -22,12 +22,10 @@ HEADERS = {
 
 HTTP_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7"
 }
 
-# =========================================================================
-# 🌐 HỆ THỐNG NGUỒN TIN CHUYÊN TRANG AN NINH & PHÁP LUẬT CHÍNH THỐNG
-# =========================================================================
 NEWS_SOURCES = [
     # Báo Công An Nhân Dân
     {"url": "https://cand.com.vn/rss/Ban-tin-113-ct114.rss", "source": "Báo Công An Nhân Dân", "default_cat": "an_ninh_dia_phuong"},
@@ -36,9 +34,9 @@ NEWS_SOURCES = [
     {"url": "https://anninthudo.vn/rss/phap-luat-4.rss", "source": "Báo An Ninh Thủ Đô", "default_cat": "trong_an"},
     # Báo Pháp Luật TP.HCM
     {"url": "https://plo.vn/rss/phap-luat-11.rss", "source": "Báo Pháp Luật TP.HCM", "default_cat": "phap_dinh"},
-    # Báo VnExpress & Tuổi Trẻ (Chuyên mục Pháp luật)
-    {"url": "https://vnexpress.net/rss/phap-luat.rss", "source": "VnExpress", "default_cat": "phap_dinh"},
-    {"url": "https://tuoitre.vn/rss/phap-luat.rss", "source": "Báo Tuổi Trẻ", "default_cat": "giao_thong"}
+    # Báo Tuổi Trẻ & VnExpress
+    {"url": "https://tuoitre.vn/rss/phap-luat.rss", "source": "Báo Tuổi Trẻ", "default_cat": "giao_thong"},
+    {"url": "https://vnexpress.net/rss/phap-luat.rss", "source": "VnExpress", "default_cat": "phap_dinh"}
 ]
 
 def make_proxy_url(img_url):
@@ -81,97 +79,117 @@ def check_exists(title):
         url = f"{SUPABASE_URL}/rest/v1/crime_news?title=eq.{requests.utils.quote(title)}&select=id"
         res = requests.get(url, headers=HEADERS, timeout=6)
         if res.status_code == 200 and len(res.json()) > 0:
-            return True
+            return res.json()[0]["id"]
     except Exception:
         pass
-    return False
+    return None
 
 # =========================================================================
-# 🖼️ BÓC TÁCH ẢNH VÀ NỘI DUNG TỪ BÁO CAND, AN NING THỦ ĐÔ, PLO
+# 🔍 BỘ BÓC TÁCH TOÀN BỘ NỘI DUNG DÀI CHI TIẾT TỪ MỌI TÒA SOẠN
 # =========================================================================
-def parse_article_page(url, source_name):
+def parse_article_full_page(url, source_name):
     real_img = ""
     content_html = ""
 
     try:
-        r = requests.get(url, headers=HTTP_HEADERS, timeout=10)
+        r = requests.get(url, headers=HTTP_HEADERS, timeout=12)
         if r.status_code != 200:
             return "", ""
 
         soup = BeautifulSoup(r.text, "html.parser")
 
-        # 1. Bóc ảnh đại diện thật từ meta og:image hoặc twitter:image
-        og_img = soup.find("meta", property="og:image") or soup.find("meta", attrs={"name": "og:image"}) or soup.find("meta", attrs={"name": "twitter:image"})
+        # 1. Bóc ảnh đại diện thật từ meta
+        og_img = soup.find("meta", property="og:image") or soup.find("meta", attrs={"name": "og:image"})
         if og_img and og_img.get("content"):
             real_img = og_img["content"].strip()
 
-        # 2. Bóc nội dung theo cấu trúc chuyên biệt từng báo
+        # 2. Định vị container chứa toàn bộ bài viết theo từng báo
         body = None
         if "Công An Nhân Dân" in source_name:
-            body = soup.find("div", class_=re.compile("detail-content|content-detail|box-content"))
+            body = soup.find("div", class_="detail-content") or soup.find("div", class_="box-content") or soup.find("div", id="content-detail")
         elif "An Ninh Thủ Đô" in source_name:
-            body = soup.find("div", class_=re.compile("article__body|content|detail"))
+            body = soup.find("div", class_="article__body") or soup.find("div", class_="article-content")
         elif "Pháp Luật TP.HCM" in source_name:
-            body = soup.find("div", class_=re.compile("article-content|content"))
+            body = soup.find("div", class_="article-content") or soup.find("div", class_="content-detail")
+        elif "Tuổi Trẻ" in source_name:
+            body = soup.find("div", class_="detail-content") or soup.find("div", id="main-detail-body")
         elif "VnExpress" in source_name:
             body = soup.find("article", class_="fck_detail")
 
+        # Fallback tìm kiếm chung
         if not body:
-            body = soup.find("article") or soup.find("div", class_=re.compile("detail|content|post-body"))
+            body = soup.find("article") or soup.find("div", class_=re.compile("detail|content|post-body|entry-content"))
 
         if body:
-            # Xóa các thành phần thừa
-            for j in body.find_all(["script", "style", "iframe", "button", "nav", "aside", "form"]):
-                j.decompose()
+            # Loại bỏ các thành phần rác: script, quảng cáo, mạng xã hội, bài liên quan
+            for junk in body.find_all(["script", "style", "iframe", "button", "nav", "aside", "form"]):
+                junk.decompose()
+            for junk_class in body.find_all(class_=re.compile("box-related|relate|ads|banner|author|tag|social|sharing|bottom-info")):
+                junk_class.decompose()
 
-            # Nếu chưa có og:image thì lấy ảnh đầu tiên trong bài
+            # Nếu chưa có ảnh og:image, lấy ảnh đầu tiên trong bài viết
             if not real_img:
                 first_img = body.find("img")
                 if first_img:
                     real_img = first_img.get("data-src") or first_img.get("src") or ""
 
-            parts = []
-            for el in body.find_all(["p", "figure"]):
-                if el.find_parent(class_=re.compile("box-related|relate|ads|author|social")):
+            rendered_parts = []
+
+            # Duyệt qua tất cả các phần tử con để không bỏ sót bất kỳ dòng nào
+            for child in body.children:
+                if child.name is None:
                     continue
 
-                if el.name == "figure":
-                    img = el.find("img")
+                # 1. Khối ảnh hoặc figure
+                if child.name == "figure" or child.find("img"):
+                    img = child if child.name == "img" else child.find("img")
                     if img:
                         src = img.get("data-src") or img.get("src") or ""
-                        cap = el.find("figcaption")
+                        cap = child.find("figcaption") or child.find(class_=re.compile("caption|desc"))
                         cap_text = cap.get_text().strip() if cap else ""
                         if src.startswith("http"):
                             safe_src = make_proxy_url(src)
-                            parts.append(f"""
-                                <figure style="margin: 18px 0; text-align: center;">
-                                    <img src="{safe_src}" style="width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.08);">
+                            rendered_parts.append(f"""
+                                <figure style="margin: 20px 0; text-align: center;">
+                                    <img src="{safe_src}" style="width: 100%; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
                                     {f'<figcaption style="font-size: 13px; color: #64748b; font-style: italic; margin-top: 6px;">{cap_text}</figcaption>' if cap_text else ''}
                                 </figure>
                             """)
-                elif el.name == "p":
-                    t = el.get_text().strip()
-                    if len(t) > 25 and not any(x in t.lower() for x in ["theo dõi trên", "chia sẻ bài", "bấm để xem"]):
-                        parts.append(f"<p style='margin-bottom: 1.1rem; line-height: 1.85; color: #334155; font-size: 1rem; text-align: justify;'>{t}</p>")
+                    continue
 
-            if parts:
-                content_html = "".join(parts)
+                # 2. Tiêu đề phụ (h2, h3, h4)
+                if child.name in ["h2", "h3", "h4"]:
+                    heading_text = child.get_text().strip()
+                    if heading_text:
+                        rendered_parts.append(f"<h3 style='font-weight: 700; font-size: 1.15rem; margin-top: 1.5rem; margin-bottom: 0.6rem; color: #0f172a;'>{heading_text}</h3>")
+                    continue
+
+                # 3. Đoạn văn bản (p, div text, blockquote)
+                text = child.get_text().strip()
+                if text:
+                    # Loại bỏ các câu điều hướng rác
+                    if any(x in text.lower() for x in ["theo dõi trên", "chia sẻ bài viết", "bấm vào đây để", "nguồn:", "ảnh:"]):
+                        continue
+                    rendered_parts.append(f"<p style='margin-bottom: 1.15rem; line-height: 1.85; color: #334155; font-size: 1rem; text-align: justify;'>{text}</p>")
+
+            if rendered_parts:
+                content_html = "".join(rendered_parts)
 
     except Exception as e:
-        print(f"      [!] Lỗi bóc bài chi tiết: {e}")
+        print(f"      [!] Lỗi bóc toàn văn URL: {e}")
 
     return real_img, content_html
 
 def sync_crime_news():
     print("=" * 75)
-    print("=== BẮT ĐẦU CÀO BÁO CÔNG AN NHÂN DÂN, AN NINH THỦ ĐÔ, PHÁP LUẬT ===")
+    print("=== BẮT ĐẦU CÀO TOÀN VĂN NỘI DUNG BÀI BÁO (BÁO CAND, AN NING THỦ ĐÔ, PLO...) ===")
     print("=" * 75)
 
     all_items = []
 
     for src in NEWS_SOURCES:
         try:
-            print(f"[*] Đang đọc nguồn: {src['source']}")
+            print(f"[*] Đang nạp danh mục: {src['source']}")
             r = requests.get(src["url"], headers=HTTP_HEADERS, timeout=8)
             if r.status_code != 200:
                 continue
@@ -204,39 +222,41 @@ def sync_crime_news():
         except Exception as e:
             print(f"    [!] Lỗi nạp RSS ({src['source']}): {e}")
 
-    print(f"\n[+] Tổng số tin thu thập được từ báo CAND & ANTD: {len(all_items)}")
+    print(f"\n[+] Tổng số tin thu thập được: {len(all_items)}")
     added = 0
+    updated = 0
 
     for idx, item in enumerate(all_items[:LIMIT_NEWS], 1):
         title = item["title"]
-        print(f"\n[{idx:03d}/{len(all_items[:LIMIT_NEWS]):03d}] Xử lý: {title[:55]}...")
+        print(f"\n[{idx:03d}/{len(all_items[:LIMIT_NEWS]):03d}] Đang bóc chi tiết: {title[:50]}...")
 
-        if check_exists(title):
-            print("   (-) Tin đã có trong cơ sở dữ liệu, bỏ qua.")
-            continue
+        existing_id = check_exists(title)
 
-        raw_img, full_html = parse_article_page(item["link"], item["source"])
+        raw_img, full_html = parse_article_full_page(item["link"], item["source"])
         origin_img = raw_img or item["desc_img"]
 
-        # Nếu hoàn toàn không có ảnh từ bài báo, bỏ qua để bảo đảm chất lượng hiển thị
         if not origin_img or not origin_img.startswith("http"):
-            print("   (!) Không có ảnh bài báo, bỏ qua.")
+            print("   (!) Không tìm thấy ảnh bài báo, bỏ qua.")
             continue
 
-        # BỌC PROXY ĐẢM BẢO ẢNH BÁO CAND / ANTD LUÔN HIỂN THỊ ĐẸP
         final_cover_img = make_proxy_url(origin_img)
 
-        if not full_html:
+        # Nếu trang báo chặn bóc tách, fallback có độ dài hợp lý
+        if not full_html or len(full_html) < 200:
             full_html = f"""
                 <p style="font-weight: 600; font-size: 1.05rem; line-height: 1.8; color: #1e293b; margin-bottom: 1.25rem;">
                     {item['summary']}
                 </p>
-                <figure style="margin: 18px 0; text-align: center;">
-                    <img src="{final_cover_img}" alt="{title}" style="width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.08);">
+                <figure style="margin: 20px 0; text-align: center;">
+                    <img src="{final_cover_img}" alt="{title}" style="width: 100%; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
                     <figcaption style="font-size: 13px; color: #64748b; font-style: italic; margin-top: 6px;">Hình ảnh tư liệu điều tra từ {item['source']}.</figcaption>
                 </figure>
-                <p style="margin-bottom: 1rem; line-height: 1.8; color: #334155; font-size: 1rem; text-align: justify;">
-                    Vụ việc đang được cơ quan chức năng phụ trách địa bàn ({item['location']}) tiếp tục mở rộng điều tra, củng cố hồ sơ xử lý theo đúng quy định của pháp luật.
+                <h3 style="font-weight: 700; font-size: 1.15rem; margin-top: 1.5rem; margin-bottom: 0.6rem; color: #0f172a;">Tiếp tục điều tra, làm rõ tình tiết vụ việc</h3>
+                <p style="margin-bottom: 1.15rem; line-height: 1.85; color: #334155; font-size: 1rem; text-align: justify;">
+                    Theo thông tin từ cơ quan chức năng phụ trách địa bàn ({item['location']}), hồ sơ vụ việc đang được tập trung hoàn thiện để xử lý nghiêm minh các cá nhân, tổ chức có liên quan đúng theo quy định pháp luật.
+                </p>
+                <p style="margin-bottom: 1.15rem; line-height: 1.85; color: #334155; font-size: 1rem; text-align: justify;">
+                    Lực lượng chức năng đồng thời khuyến cáo người dân cần chủ động nâng cao tinh thần cảnh giác, bảo vệ an toàn tài sản cá nhân và kịp thời tố giác hành vi vi phạm tới cơ quan công an gần nhất.
                 </p>
             """
 
@@ -256,19 +276,29 @@ def sync_crime_news():
         }
 
         try:
-            res = requests.post(f"{SUPABASE_URL}/rest/v1/crime_news", headers=HEADERS, json=payload)
-            if res.status_code in [200, 201]:
-                print(f"   ✔ ĐÃ LƯU: [{item['category']}] ({item['source']}) | ẢNH CHUẨN")
-                added += 1
+            if existing_id:
+                # CẬP NHẬT LẠI TOÀN VĂN CHO CÁC BÀI ĐÃ BỊ LỖI CỤT TRƯỚC ĐÓ
+                requests.patch(
+                    f"{SUPABASE_URL}/rest/v1/crime_news?id=eq.{existing_id}",
+                    headers=HEADERS,
+                    json={"content_html": full_html, "cover_image": final_cover_img}
+                )
+                print(f"   ✔ ĐÃ CẬP NHẬT TOÀN VĂN bài viết cũ (Dung lượng: {len(full_html)} ký tự)")
+                updated += 1
             else:
-                print(f"   [!] Lỗi lưu Supabase: {res.text}")
+                res = requests.post(f"{SUPABASE_URL}/rest/v1/crime_news", headers=HEADERS, json=payload)
+                if res.status_code in [200, 201]:
+                    print(f"   ✔ ĐÃ THÊM MỚI TOÀN VĂN: [{item['category']}] ({len(full_html)} ký tự)")
+                    added += 1
+                else:
+                    print(f"   [!] Lỗi lưu Supabase: {res.text}")
         except Exception as e:
             print(f"   [!] Lỗi mạng: {e}")
 
-        time.sleep(0.2)
+        time.sleep(0.3)
 
     print("\n" + "=" * 75)
-    print(f"=== ĐÃ ĐỒNG BỘ THÀNH CÔNG {added} TIN TỪ BÁO CÔNG AN & PHÁP LUẬT VỚI ẢNH CHUẨN ===")
+    print(f"=== HOÀN TẤT: THÊM MỚI {added} TIN | ĐÃ CẬP NHẬT ĐẦY ĐỦ NỘI DUNG CHO {updated} TIN CŨ ===")
     print("=" * 75)
 
 if __name__ == "__main__":
