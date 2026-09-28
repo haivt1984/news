@@ -1,0 +1,33 @@
+name: Auto Collect Crime News
+
+on:
+  schedule:
+    # Chạy tự động mỗi 3 tiếng một lần (vào phút thứ 0 của các khung 0h, 3h, 6h, 9h, 12h, 15h, 18h, 21h UTC)
+    - cron: '0 */3 * * *'
+  workflow_dispatch: # Cho phép bấm nút "Run workflow" để cào thử thủ công bất cứ lúc nào
+
+jobs:
+  run-crawler:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Tải mã nguồn về máy ảo
+        uses: actions/checkout@v4
+
+      - name: 2. Thiết lập môi trường Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 3. Cài đặt các thư viện cần thiết
+        run: |
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install requests beautifulsoup4 supabase; fi
+
+      - name: 4. Chạy kịch bản cào tin an ninh - xã hội
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          python collector_crime.py
