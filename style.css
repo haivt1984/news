@@ -1,0 +1,79 @@
+/* Thiết lập hiển thị tối ưu cho điện thoại */
+:root {
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  padding-bottom: var(--sab);
+}
+
+/* Ẩn thanh cuộn trên các danh mục trượt ngang điện thoại */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Định dạng typography chuẩn báo chí khi đọc toàn văn */
+.article-full-body h2 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-top: 1.5rem;
+  margin-bottom: 0.6rem;
+  color: #0f172a;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.article-full-body h2::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 1.2rem;
+  background-color: #dc2626;
+  border-radius: 2px;
+}
+
+.article-full-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #1e293b;
+}
+
+.article-full-body p {
+  margin-bottom: 1.15rem;
+  line-height: 1.85;
+  color: #334155;
+  font-size: 1rem;
+  text-align: justify;
+  font-family: 'Merriweather', serif;
+}
+
+.article-full-body figure {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.article-full-body figure img {
+  border-radius: 0.85rem;
+  width: 100%;
+  object-fit: cover;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f1f5f9;
+}
+
+.article-full-body figcaption {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-family: 'Inter', sans-serif;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
