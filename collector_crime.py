@@ -1,214 +1,338 @@
-import os
-import re
-import json
-import time
-import requests
-import sys
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>An Ninh 24H &bull; Tin Nhanh Pháp Luật & Trật Tự Xã Hội</title>
 
-sys.stdout.reconfigure(line_buffering=True)
+  <!-- PWA Manifest & Theme -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#881337">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-# =========================================================================
-# ⚙️ CẤU HÌNH SỐ LƯỢNG TIN CẦN CÀO & ĐỒNG BỘ LÊN SUPABASE
-# =========================================================================
-LIMIT_NEWS = 100  # <-- ĐÃ ĐIỀU CHỈNH 100 TIN (Tùy chỉnh số lượng tại đây)
-# =========================================================================
+  <!-- Tailwind CSS & Supabase JS v2 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-SUPABASE_URL = os.getenv("SUPABASE_URL") or "https://lleeibzegmnycuingzgx.supabase.co"
-SUPABASE_KEY = os.getenv("SUPABASE_KEY") or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsZWVpYnplZ21ueWN1aW5nemd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMjc5OTUsImV4cCI6MjEwNTcwMzk5NX0.KrO8Y8qoKh0NIPYDL6wki7zGb-Lxi1xwWgQrX9xSXxE"
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-if not SUPABASE_URL.startswith("http"):
-    raise ValueError(f"SUPABASE_URL không hợp lệ: '{SUPABASE_URL}'")
-
-HEADERS = {
-    "apikey": SUPABASE_KEY,
-    "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json"
-}
-
-# =========================================================================
-# BỘ TẠO DỮ LIỆU ĐA DẠNG 100 TIN TỨC AN NINH - PHÁP LUẬT
-# =========================================================================
-def generate_100_crime_news():
-    templates = [
-        {
-            "category": "lua_dao",
-            "title_pattern": "Cảnh báo thủ đoạn {} qua mạng xã hội",
-            "topics": [
-                "giả danh cán bộ công an gọi video đe dọa lệnh bắt tạm giam",
-                "mạo danh nhân viên ngân hàng yêu cầu nâng cấp sinh trắc học",
-                "bẫy tuyển cộng tác viên xử lý đơn hàng online hoa hồng cao",
-                "kêu gọi đầu tư sàn tài chính tiền ảo cam kết lợi nhuận 30%",
-                "bán tour du lịch giá rẻ chiếm đoạt tiền đặt cọc",
-                "giả danh giáo viên gọi báo con cấp cứu cần chuyển tiền gấp",
-                "gửi tin nhắn đính kèm mã độc chiếm quyền điều khiển điện thoại",
-                "cho vay nặng lãi qua app tín dụng đen khủng bố tinh thần"
-            ],
-            "locations": ["Toàn quốc", "Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ"],
-            "sources": ["Báo Công An Nhân Dân", "Cổng TTĐT Bộ Công An", "Báo Pháp Luật TP.HCM"],
-            "image": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80"
-        },
-        {
-            "category": "trong_an",
-            "title_pattern": "Triệt phá đường dây {} quy mô đặc biệt lớn",
-            "topics": [
-                "vận chuyển trái phép 50 bánh ma túy từ biên giới",
-                "buôn lậu vàng thỏi qua đường mòn cửa khẩu",
-                "sản xuất buôn bán tân dược giả xuyên quốc gia",
-                "đánh bạc nghìn tỷ qua cổng game cá cược trực tuyến",
-                "cho vay lãi nặng tín dụng đen có sử dụng vũ khí nóng",
-                "mua bán linh kiện vũ khí quân dụng qua bưu chính",
-                "khai thác cát lậu trái phép trên sông quy mô liên tỉnh"
-            ],
-            "locations": ["Điện Biên", "Quảng Ninh", "Tây Ninh", "Bình Dương", "Đồng Nai", "Nghệ An"],
-            "sources": ["Báo Công An Nhân Dân", "Báo Dân Trí", "Báo Tiền Phong"],
-            "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
-        },
-        {
-            "category": "phap_dinh",
-            "title_pattern": "Tuyên án vụ án {}: {}",
-            "topics": [
-                ("thao túng thị trường chứng khoán", "Cựu Chủ tịch hội đồng quản trị lĩnh 18 năm tù"),
-                ("buôn lậu xăng dầu liên tỉnh", "Mức án thích đáng cho các đối tượng cầm đầu"),
-                ("vi phạm quy định đấu thầu", "Buộc bồi thường hàng trăm tỷ đồng cho nhà nước"),
-                ("lừa đảo chiếm đoạt tài sản", "Hội đồng xét xử tuyên phạt mức án chung thân"),
-                ("sử dụng công nghệ cao trộm cắp", "Nhóm đối tượng bồi thường toàn bộ thiệt hại")
-            ],
-            "locations": ["Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng", "Quảng Nam", "Bắc Ninh"],
-            "sources": ["Báo Pháp Luật TP.HCM", "Báo Dân Trí", "Tạp chí Tòa Án"],
-            "image": "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?auto=format&fit=crop&w=800&q=80"
-        },
-        {
-            "category": "an_ninh_dia_phuong",
-            "title_pattern": "Bắt nóng đối tượng {} trên địa bàn",
-            "topics": [
-                "cướp giật tài sản của người đi đường chỉ sau 2 giờ gây án",
-                "đột nhập nhà dân trộm cắp xe máy và tài sản giá trị",
-                "gây rối trật tự công cộng mang theo hung khí nguy hiểm",
-                "tổ chức sử dụng trái phép chất ma túy trong quán karaoke",
-                "chống người thi hành công vụ tại chốt kiểm tra nồng độ cồn"
-            ],
-            "locations": ["Bình Thạnh, TP.HCM", "Cầu Giấy, Hà Nội", "Hải Châu, Đà Nẵng", "TP. Biên Hòa", "TP. Thuận An"],
-            "sources": ["Báo Công An Nhân Dân", "Công An TP.HCM"],
-            "image": "https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=800&q=80"
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          colors: {
+            law: {
+              red: '#991b1b',
+              darkRed: '#7f1d1d',
+              lightRed: '#fef2f2',
+              gold: '#f59e0b'
+            }
+          }
         }
-    ]
+      }
+    }
+  </script>
 
-    news_list = []
-    counter = 1
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .article-modal-body h2 { font-size: 1.15rem; font-weight: 800; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #1e293b; }
+    .article-modal-body p { margin-bottom: 0.85rem; line-height: 1.75; color: #334155; font-size: 0.95rem; text-align: justify; }
+    .article-modal-body img { border-radius: 0.75rem; margin: 1rem 0; width: 100%; object-fit: cover; }
+    .article-modal-body figcaption { font-size: 0.8rem; color: #64748b; font-style: italic; text-align: center; margin-top: -0.5rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 min-h-screen flex flex-col font-sans antialiased">
 
-    while len(news_list) < LIMIT_NEWS:
-        for tpl in templates:
-            if len(news_list) >= LIMIT_NEWS:
-                break
+  <!-- ================= TOP HEADER ================= -->
+  <header class="bg-law-darkRed text-white sticky top-0 z-40 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 cursor-pointer select-none shrink-0" onclick="filterNews('ALL')">
+        <div class="w-10 h-10 rounded-2xl bg-amber-400 text-law-darkRed flex items-center justify-center font-black text-2xl shadow-sm">⚖</div>
+        <div>
+          <div class="font-black text-xl tracking-tight leading-none text-white">AN NINH <span class="text-amber-400">24H</span></div>
+          <span class="text-[9px] text-red-200 font-mono tracking-widest uppercase">Pháp Đình & Trật Tự Xã Hội</span>
+        </div>
+      </div>
 
-            for top in tpl["topics"]:
-                if len(news_list) >= LIMIT_NEWS:
-                    break
+      <div class="flex-grow max-w-xl relative text-slate-800 hidden sm:block">
+        <input 
+          type="text" 
+          id="search-input"
+          placeholder="Tìm kiếm vụ án, thủ đoạn lừa đảo, địa bàn..." 
+          class="w-full bg-white/95 rounded-xl pl-9 pr-4 py-2 text-xs focus:outline-none shadow-inner placeholder:text-slate-400"
+          oninput="handleSearch()"
+        />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
 
-                loc = tpl["locations"][counter % len(tpl["locations"])]
-                src = tpl["sources"][counter % len(tpl["sources"])]
-                is_breaking = (counter % 5 == 0)
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/80 border border-red-800 text-[11px] font-mono text-amber-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Trực tuyến</span>
+        </span>
+      </div>
+    </div>
 
-                if isinstance(top, tuple):
-                    title = tpl["title_pattern"].format(top[0], top[1])
-                    summary = f"TAND {loc} vừa mở phiên tòa xét xử sơ thẩm công khai vụ án {top[0]}. Đại diện Viện kiểm sát nhận định hành vi của các bị cáo là đặc biệt nguy hiểm."
-                else:
-                    title = tpl["title_pattern"].format(top)
-                    summary = f"Cơ quan chức năng tại {loc} vừa phát đi thông báo và khuyến cáo khẩn cấp liên quan đến vụ việc {top}."
+    <!-- Navigation Menu -->
+    <nav class="bg-red-950 border-t border-red-900/60 text-xs">
+      <div class="max-w-7xl mx-auto px-4 flex items-center gap-1 overflow-x-auto no-scrollbar py-1.5 font-medium" id="category-nav">
+        <button onclick="filterNews('ALL')" class="cat-btn px-3 py-1.5 rounded-lg bg-red-800 text-white font-bold shrink-0 transition" data-cat="ALL">Tất cả tin</button>
+        <button onclick="filterNews('trong_an')" class="cat-btn px-3 py-1.5 rounded-lg hover:bg-red-900 text-red-200 shrink-0 transition" data-cat="trong_an">🔥 Trọng án</button>
+        <button onclick="filterNews('lua_dao')" class="cat-btn px-3 py-1.5 rounded-lg hover:bg-red-900 text-red-200 shrink-0 transition" data-cat="lua_dao">⚠️ Cảnh báo lừa đảo</button>
+        <button onclick="filterNews('phap_dinh')" class="cat-btn px-3 py-1.5 rounded-lg hover:bg-red-900 text-red-200 shrink-0 transition" data-cat="phap_dinh">⚖ Pháp đình & Xét xử</button>
+        <button onclick="filterNews('an_ninh_dia_phuong')" class="cat-btn px-3 py-1.5 rounded-lg hover:bg-red-900 text-red-200 shrink-0 transition" data-cat="an_ninh_dia_phuong">🛡 An ninh cơ sở</button>
+      </div>
+    </nav>
+  </header>
 
-                # Thêm định danh đợt để không bị trùng slug/tiêu đề
-                if counter > 25:
-                    title_final = f"{title} (Vụ việc #{counter})"
-                else:
-                    title_final = title
+  <!-- ================= TICKER TIN NÓNG KHẨN CẤP ================= -->
+  <section class="bg-amber-100 border-b border-amber-200 text-amber-950 text-xs py-2 px-4 shadow-inner">
+    <div class="max-w-7xl mx-auto flex items-center gap-2">
+      <span class="font-black bg-law-red text-white px-2 py-0.5 rounded text-[10px] uppercase font-mono tracking-wider shrink-0">TIN NÓNG</span>
+      <div id="breaking-ticker" class="truncate font-semibold text-law-darkRed">
+        Đang tải thông báo khẩn cấp từ các cơ quan chức năng...
+      </div>
+    </div>
+  </section>
 
-                content_html = f"""
-                    <h2>1. Diễn biến tình hình vụ việc</h2>
-                    <p>Theo báo cáo ban đầu từ cơ quan điều tra tại {loc}, hành vi phạm tội có dấu hiệu tinh vi, chuyên nghiệp và có sự phân công vai trò cụ thể giữa các đối tượng liên quan.</p>
-                    <figure style="text-align: center; margin: 15px 0;">
-                        <img src="{tpl['image']}" alt="{title_final}" style="width: 100%; border-radius: 8px;">
-                        <figcaption style="font-size: 12px; color: #64748b; font-style: italic; margin-top: 5px;">Hiện trường và tang vật liên quan được lực lượng chức năng lập biên bản thu giữ.</figcaption>
-                    </figure>
-                    <h2>2. Khuyến cáo từ cơ quan chức năng</h2>
-                    <p>Cơ quan chức năng khuyến cáo người dân khi phát hiện các biểu hiện nghi vấn cần báo ngay cho đơn vị Công an gần nhất hoặc qua đường dây nóng 113 để kịp thời phối hợp xử lý, tuyệt đối không tự ý xử lý thỏa hiệp với đối tượng.</p>
-                """
+  <!-- ================= NỘI DUNG CHÍNH ================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full space-y-6">
 
-                news_list.append({
-                    "title": title_final,
-                    "category": tpl["category"],
-                    "location": loc,
-                    "summary": summary,
-                    "cover_image": tpl["image"],
-                    "content_html": content_html,
-                    "source_name": src,
-                    "source_url": "https://cand.com.vn/",
-                    "is_breaking": is_breaking
-                })
-                counter += 1
+    <!-- Trạng thái tải tin -->
+    <div id="loading-state" class="py-20 text-center space-y-3">
+      <div class="w-9 h-9 border-4 border-law-red border-t-transparent rounded-full animate-spin mx-auto"></div>
+      <p class="text-xs font-mono text-slate-500">Đang kết nối cơ sở dữ liệu Supabase và đồng bộ tin tức...</p>
+    </div>
 
-    return news_list[:LIMIT_NEWS]
+    <!-- Thông báo rỗng -->
+    <div id="empty-state" class="hidden py-16 text-center bg-white rounded-3xl border border-slate-200 p-8 space-y-3">
+      <span class="text-4xl">📂</span>
+      <h3 class="font-bold text-base text-slate-800">Không tìm thấy tin bài nào</h3>
+      <p class="text-xs text-slate-500 font-mono">Hãy thử kiểm tra lại từ khóa hoặc đảm bảo bot `collector_crime.py` đã đồng bộ tin vào bảng `crime_news`.</p>
+    </div>
 
-# =========================================================================
-# XỬ LÝ ĐỒNG BỘ VÀO SUPABASE
-# =========================================================================
-def check_exists(title):
-    try:
-        url = f"{SUPABASE_URL}/rest/v1/crime_news?title=eq.{requests.utils.quote(title)}&select=id"
-        res = requests.get(url, headers=HEADERS, timeout=8)
-        if res.status_code == 200 and len(res.json()) > 0:
-            return True
-    except Exception:
-        pass
-    return False
+    <!-- Lưới hiển thị tin tức -->
+    <section id="news-section" class="hidden space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+        <h2 id="section-title" class="font-bold text-sm sm:text-base text-slate-900 uppercase font-mono flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-law-red"></span>
+          Danh Sách Tin Tức Mới Nhất
+        </h2>
+        <span id="news-count" class="px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 text-xs font-mono font-semibold">0 tin</span>
+      </div>
 
-def sync_crime_news():
-    print("=" * 70)
-    print(f"=== BẮT ĐẦU CÀO & ĐỒNG BỘ {LIMIT_NEWS} TIN AN NINH - TRẬT TỰ XÃ HỘI ===")
-    print("=" * 70)
+      <div id="news-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    </section>
 
-    news_data = generate_100_crime_news()
-    success_count = 0
-    skip_count = 0
+  </main>
 
-    for idx, item in enumerate(news_data, 1):
-        title = item["title"]
-        print(f"\n[{idx:03d}/{len(news_data):03d}] Xử lý: {title[:55]}...")
+  <!-- ================= MODAL XEM CHI TIẾT BÀI BÁO ================= -->
+  <div id="article-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 hidden">
+    <div class="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col relative animate-in fade-in zoom-in duration-200">
+      
+      <!-- Nút đóng -->
+      <button onclick="closeArticleModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm transition">
+        ✕
+      </button>
 
-        if check_exists(title):
-            print("   (-) Tin bài đã tồn tại trên hệ thống, bỏ qua.")
-            skip_count += 1
-            continue
+      <!-- Header bài viết -->
+      <div class="border-b border-slate-100 pb-3 mb-4 pr-8 shrink-0">
+        <div class="flex items-center gap-2 text-[11px] font-mono text-slate-400 mb-1.5">
+          <span id="modal-category" class="px-2 py-0.5 rounded font-bold uppercase bg-red-50 text-law-red"></span>
+          <span>&bull;</span>
+          <span id="modal-location" class="text-slate-600 font-semibold"></span>
+          <span>&bull;</span>
+          <span id="modal-source" class="text-slate-500 font-bold"></span>
+        </div>
+        <h1 id="modal-title" class="text-base sm:text-lg font-bold text-slate-900 leading-snug"></h1>
+      </div>
 
-        slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-') + f"-{int(time.time())}-{idx}"
-        payload = {
-            "title": title,
-            "slug": slug,
-            "category": item["category"],
-            "location": item["location"],
-            "summary": item["summary"],
-            "cover_image": item["cover_image"],
-            "content_html": item["content_html"],
-            "source_name": item["source_name"],
-            "source_url": item["source_url"],
-            "is_breaking": item.get("is_breaking", False)
+      <!-- Nội dung bài viết cuộn được -->
+      <div class="overflow-y-auto pr-1 text-slate-700 text-sm leading-relaxed custom-scroll" id="modal-body-container">
+        <p id="modal-summary" class="font-semibold text-slate-900 bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 mb-4 text-xs sm:text-sm"></p>
+        <div id="modal-content" class="article-modal-body"></div>
+      </div>
+
+      <!-- Footer modal -->
+      <div class="border-t border-slate-100 pt-3 mt-4 flex items-center justify-between text-xs font-mono text-slate-400 shrink-0">
+        <a id="modal-source-link" href="#" target="_blank" class="text-law-red hover:underline font-bold">
+          Xem bài gốc trên trang báo &rarr;
+        </a>
+        <button onclick="closeArticleModal()" class="px-4 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold">
+          Đóng
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="bg-slate-900 text-slate-400 text-center py-6 text-xs border-t border-slate-800 font-mono mt-auto">
+    An Ninh 24H &bull; Nền Tảng Cập Nhật & Tổng Hợp Tin Tức Pháp Luật, Tội Phạm Chính Thống
+  </footer>
+
+  <!-- ================= KỊCH BẢN KẾT NỐI SUPABASE ================= -->
+  <script>
+    const SUPABASE_URL = "https://lleeibzegmnycuingzgx.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsZWVpYnplZ21ueWN1aW5nemd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMjc5OTUsImV4cCI6MjEwNTcwMzk5NX0.KrO8Y8qoKh0NIPYDL6wki7zGb-Lxi1xwWgQrX9xSXxE";
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let allNews = [];
+    let currentCategory = 'ALL';
+
+    const categoryNames = {
+      'trong_an': 'Trọng án',
+      'lua_dao': 'Cảnh báo lừa đảo',
+      'phap_dinh': 'Pháp đình',
+      'an_ninh_dia_phuong': 'An ninh cơ sở'
+    };
+
+    async function fetchCrimeNews() {
+      try {
+        const { data, error } = await client
+          .from('crime_news')
+          .select('*')
+          .order('id', { ascending: false });
+
+        document.getElementById('loading-state').classList.add('hidden');
+
+        if (error) {
+          console.error("Lỗi truy vấn Supabase:", error);
+          document.getElementById('empty-state').classList.remove('hidden');
+          return;
         }
 
-        try:
-            res = requests.post(f"{SUPABASE_URL}/rest/v1/crime_news", headers=HEADERS, json=payload)
-            if res.status_code in [200, 201]:
-                print(f"   ✔ Đã thêm thành công ({item['category']} | {item['location']})")
-                success_count += 1
-            else:
-                print(f"   [!] Lỗi ghi dữ liệu: {res.text}")
-        except Exception as e:
-            print(f"   [!] Lỗi kết nối: {e}")
+        if (data && data.length > 0) {
+          allNews = data;
+          document.getElementById('news-section').classList.remove('hidden');
+          setupBreakingNews(allNews);
+          renderNews(allNews);
+        } else {
+          document.getElementById('empty-state').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error("Lỗi ngoại lệ:", err);
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('empty-state').classList.remove('hidden');
+      }
+    }
 
-        # Nghỉ ngắn tránh rate-limit API
-        time.sleep(0.1)
+    function setupBreakingNews(list) {
+      const breaking = list.find(item => item.is_breaking) || list[0];
+      if (breaking) {
+        document.getElementById('breaking-ticker').innerText = `[${breaking.location}] ${breaking.title}`;
+        document.getElementById('breaking-ticker').onclick = () => openArticle(breaking.id);
+        document.getElementById('breaking-ticker').classList.add('cursor-pointer', 'hover:underline');
+      }
+    }
 
-    print("\n" + "=" * 70)
-    print(f"=== KẾT THÚC ĐỒNG BỘ: THÊM MỚI {success_count} TIN | BỎ QUA {skip_count} TIN ĐÃ CÓ ===")
-    print("=" * 70)
+    function renderNews(list) {
+      const grid = document.getElementById('news-grid');
+      document.getElementById('news-count').innerText = `${list.length} tin bài`;
 
-if __name__ == "__main__":
-    sync_crime_news()
+      if (list.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 font-mono text-xs">Không có bài viết nào khớp với tiêu chí tìm kiếm.</div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(item => {
+        const catLabel = categoryNames[item.category] || item.category;
+        return `
+          <article onclick="openArticle(${item.id})" class="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between group cursor-pointer">
+            <div>
+              <div class="aspect-[16/10] bg-slate-100 overflow-hidden relative border-b border-slate-100">
+                <img src="${item.cover_image}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-law-darkRed text-white uppercase shadow-xs">
+                  ${catLabel}
+                </span>
+                <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-semibold bg-black/75 text-white backdrop-blur-xs">
+                  📍 ${item.location}
+                </span>
+                ${item.is_breaking ? '<span class="absolute top-2.5 right-2.5 px-2 py-0.5 rounded text-[9px] font-black bg-amber-400 text-slate-900 uppercase">Khẩn</span>' : ''}
+              </div>
+
+              <div class="p-4">
+                <div class="text-[10px] font-mono text-slate-400 uppercase font-semibold mb-1">${item.source_name}</div>
+                <h3 class="font-bold text-xs sm:text-sm text-slate-900 leading-snug line-clamp-2 group-hover:text-law-red transition mb-2">
+                  ${item.title}
+                </h3>
+                <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                  ${item.summary}
+                </p>
+              </div>
+            </div>
+
+            <div class="p-4 pt-0 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono text-slate-400 mt-2 pt-2.5">
+              <span>Đọc toàn văn &rarr;</span>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function filterNews(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if (btn.getAttribute('data-cat') === cat) {
+          btn.className = "cat-btn px-3 py-1.5 rounded-lg bg-red-800 text-white font-bold shrink-0 transition";
+        } else {
+          btn.className = "cat-btn px-3 py-1.5 rounded-lg hover:bg-red-900 text-red-200 shrink-0 transition";
+        }
+      });
+
+      const filtered = (cat === 'ALL') ? allNews : allNews.filter(n => n.category === cat);
+      renderNews(filtered);
+    }
+
+    function handleSearch() {
+      const q = document.getElementById('search-input').value.toLowerCase().trim();
+      const filtered = allNews.filter(item => {
+        const matchCat = (currentCategory === 'ALL') || (item.category === currentCategory);
+        const matchText = (!q) || item.title.toLowerCase().includes(q) || item.location.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q);
+        return matchCat && matchText;
+      });
+      renderNews(filtered);
+    }
+
+    function openArticle(id) {
+      const item = allNews.find(n => n.id === id);
+      if (!item) return;
+
+      document.getElementById('modal-title').innerText = item.title;
+      document.getElementById('modal-category').innerText = categoryNames[item.category] || item.category;
+      document.getElementById('modal-location').innerText = `Địa bàn: ${item.location}`;
+      document.getElementById('modal-source').innerText = `Nguồn: ${item.source_name}`;
+      document.getElementById('modal-summary').innerText = item.summary;
+      document.getElementById('modal-content').innerHTML = item.content_html;
+      document.getElementById('modal-source-link').href = item.source_url || '#';
+
+      document.getElementById('article-modal').classList.remove('hidden');
+    }
+
+    function closeArticleModal() {
+      document.getElementById('article-modal').classList.add('hidden');
+    }
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('PWA Service Worker ready:', reg.scope))
+          .catch(err => console.error('PWA Error:', err));
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', fetchCrimeNews);
+  </script>
+</body>
+</html>
