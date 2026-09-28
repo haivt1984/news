@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tin Nhanh Pháp Luật & An Ninh Trật Tự 24/7</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- Header Tin Tức Pháp Luật -->
+  <header class="bg-red-900 text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="w-8 h-8 rounded-full bg-red-700 flex items-center justify-center font-bold text-lg">⚖</span>
+        <div>
+          <h1 class="text-xl font-black uppercase tracking-tight">An Ninh 24H</h1>
+          <p class="text-[10px] text-red-200 uppercase tracking-widest font-mono">Thông tin Pháp đình & Trật tự Xã hội</p>
+        </div>
+      </div>
+      <div class="text-xs font-mono bg-red-950/60 px-3 py-1.5 rounded-lg border border-red-800">
+        🔴 Cập nhật liên tục
+      </div>
+    </div>
+
+    <!-- Thanh Menu Chuyên Mục -->
+    <nav class="bg-red-950 border-t border-red-800">
+      <div class="max-w-6xl mx-auto px-4 flex items-center gap-4 overflow-x-auto text-xs py-2 font-medium">
+        <button onclick="filterNews('ALL')" class="hover:text-amber-300 transition whitespace-nowrap">Tất cả tin</button>
+        <button onclick="filterNews('trong_an')" class="hover:text-amber-300 transition whitespace-nowrap">Trọng án</button>
+        <button onclick="filterNews('lua_dao')" class="hover:text-amber-300 transition whitespace-nowrap">Cảnh báo lừa đảo</button>
+        <button onclick="filterNews('phap_dinh')" class="hover:text-amber-300 transition whitespace-nowrap">Pháp đình / Xét xử</button>
+        <button onclick="filterNews('an_ninh_dia_phuong')" class="hover:text-amber-300 transition whitespace-nowrap">An ninh cơ sở</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Dải Breaking News -->
+  <div class="bg-amber-100 border-b border-amber-200 text-amber-900 text-xs py-2 px-4">
+    <div class="max-w-6xl mx-auto flex items-center gap-2">
+      <span class="font-bold bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] uppercase">Cảnh giác</span>
+      <span class="truncate">Bộ Công an khuyến cáo thủ đoạn mạo danh cán bộ tòa án gọi điện thoại yêu cầu nộp tiền phạt nguội qua tài khoản cá nhân.</span>
+    </div>
+  </div>
+
+  <!-- Danh sách tin tức -->
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
+    <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Tin bài render động từ Supabase -->
+    </div>
+  </main>
+
+  <footer class="bg-slate-900 text-slate-400 text-center py-6 text-xs border-t border-slate-800">
+    <p>Trang tổng hợp thông tin trật tự an ninh xã hội từ các cơ quan báo chí chính thống.</p>
+  </footer>
+
+  <script>
+    const SUPABASE_URL = "https://lleeibzegmnycuingzgx.supabase.co";
+    const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let allNews = [];
+
+    async function loadNews() {
+      try {
+        const { data, error } = await client
+          .from('crime_news')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          allNews = data;
+          renderGrid(allNews);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderGrid(list) {
+      const container = document.getElementById('news-grid');
+      container.innerHTML = list.map(item => `
+        <article class="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition">
+          <div>
+            <div class="aspect-[16/9] w-full overflow-hidden bg-slate-100 relative">
+              <img src="${item.cover_image}" class="w-full h-full object-cover">
+              <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] bg-black/70 text-white font-mono">
+                📍 ${item.location}
+              </span>
+            </div>
+            <div class="p-4">
+              <span class="text-[10px] uppercase font-mono text-red-700 font-bold block mb-1">
+                ${item.source_name}
+              </span>
+              <h3 class="font-bold text-sm text-slate-900 leading-snug line-clamp-2 hover:text-red-700 cursor-pointer">
+                ${item.title}
+              </h3>
+              <p class="text-xs text-slate-600 line-clamp-3 mt-2 leading-relaxed">
+                ${item.summary}
+              </p>
+            </div>
+          </div>
+          <div class="p-4 pt-0 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono mt-3 pt-2">
+            <span>Chi tiết &rarr;</span>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function filterNews(cat) {
+      if (cat === 'ALL') renderGrid(allNews);
+      else renderGrid(allNews.filter(n => n.category === cat));
+    }
+
+    window.addEventListener('DOMContentLoaded', loadNews);
+  </script>
+</body>
+</html>
