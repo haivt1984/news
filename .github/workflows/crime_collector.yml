@@ -18,12 +18,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
+          # Đã bỏ dòng cache: 'pip' ở đây
 
-      - name: 3. Cài đặt các thư viện cần thiết
+      - name: 3. Cài đặt các thư viện
         run: |
-          pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install requests beautifulsoup4 supabase; fi
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
 
       - name: 4. Chạy kịch bản cào tin an ninh - xã hội
         env:
